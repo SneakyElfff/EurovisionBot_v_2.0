@@ -36,4 +36,4 @@ async def recap(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(text)
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text('Commands:\n/start - Subscribe\n/unsubscribe - Unsubscribe\n/help - Show this message')
+    await update.message.reply_text('Commands:\n/start - Subscribe\n/unsubscribe - Unsubscribe\n/recap - Get today\'s recap\n/help - Show this message')
