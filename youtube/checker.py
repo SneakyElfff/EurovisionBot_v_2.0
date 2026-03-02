@@ -1,6 +1,7 @@
 import logging
 import sqlite3
 from googleapiclient.discovery import build
+from datetime import datetime, timedelta, timezone
 from config import YOUTUBE_API_KEY, YOUTUBE_CHANNEL_ID, DB_FILE, PHRASES
 
 logger = logging.getLogger(__name__)
@@ -61,6 +62,41 @@ def check_for_new_videos():
 
     logger.info("Found %d new videos", len(new_videos))
     return new_videos
+
+from datetime import datetime, timezone
+
+def get_today_videos():
+    logger.info("Fetching today's videos (UTC)")
+
+    youtube = build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
+
+    today_start_utc = datetime.now(timezone.utc).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    ).isoformat()
+
+    search_response = youtube.search().list(
+        part="snippet",
+        channelId=YOUTUBE_CHANNEL_ID,
+        order="date",
+        publishedAfter=today_start_utc,
+        maxResults=10,
+        type="video",
+    ).execute()
+
+    videos = []
+
+    for item in search_response.get("items", []):
+        title = item["snippet"]["title"]
+
+        if any(phrase.lower() in title.lower() for phrase in PHRASES):
+            video_id = item["id"]["videoId"]
+            videos.append({
+                "title": title,
+                "url": f"https://www.youtube.com/watch?v={video_id}",
+            })
+
+    logger.info("Today's recap found %d matching videos", len(videos))
+    return videos
 
 # def check_for_new_videos():
 #     logger.info("Checking YouTube for new videos")
