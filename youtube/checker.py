@@ -24,34 +24,40 @@ def check_for_new_videos():
 
     youtube = build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
 
-    channels_response = youtube.channels().list(part='contentDetails', id=YOUTUBE_CHANNEL_ID).execute()
-    uploads_playlist_id = channels_response['items'][0]['contentDetails']['relatedPlaylists']['uploads']
+    channels_response = youtube.channels().list(
+        part="contentDetails",
+        id=YOUTUBE_CHANNEL_ID
+    ).execute()
 
-    playlist_response = youtube.playlistItems().list(part='snippet', playlistId=uploads_playlist_id, maxResults=5).execute()
-    items = playlist_response['items']
+    uploads_playlist_id = channels_response["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
+
+    playlist_response = youtube.playlistItems().list(
+        part="snippet",
+        playlistId=uploads_playlist_id,
+        maxResults=5
+    ).execute()
+
+    items = playlist_response["items"]
 
     last_id = _get_last_video_id()
     new_videos = []
 
-    for item in sorted(items, key=lambda x: x['snippet']['publishedAt'], reverse=True):
-        video_id = item['snippet']['resourceId']['videoId']
+    for item in sorted(items, key=lambda x: x["snippet"]["publishedAt"], reverse=True):
+        video_id = item["snippet"]["resourceId"]["videoId"]
 
         if video_id == last_id:
             break
 
-    title = item['snippet']['title'].lower()
+        title = item["snippet"]["title"]
 
-    matches = any(phrase.lower() in title for phrase in PHRASES)
-
-    if matches:
-        new_videos.append({
-            'title': item['snippet']['title'],
-            'url': f"https://www.youtube.com/watch?v={video_id}"
-        })
+        if any(phrase.lower() in title.lower() for phrase in PHRASES):
+            new_videos.append({
+                "title": title,
+                "url": f"https://www.youtube.com/watch?v={video_id}"
+            })
 
     if items:
-        latest_id = items[0]['snippet']['resourceId']['videoId']
-        _set_last_video_id(latest_id)
+        _set_last_video_id(items[0]["snippet"]["resourceId"]["videoId"])
 
     logger.info("Found %d new videos", len(new_videos))
     return new_videos
